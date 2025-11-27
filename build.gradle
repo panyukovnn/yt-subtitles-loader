@@ -1,31 +1,60 @@
 plugins {
     id 'java'
-    id 'application'
-}
-
-application {
-    mainClass = 'ru.panyukovnn.ytsubtitlesstarter.Main'
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.palantir.git-version' version '3.1.0'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.1.5'
 }
 
 group = 'ru.panyukovnn'
-version = '1.0-SNAPSHOT'
+version = gitVersion()
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withJavadocJar()
+    withSourcesJar()
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("org.apache.commons:commons-lang3:3.20.0")
-    implementation("org.slf4j:slf4j-api:2.0.9")
-    implementation("org.slf4j:slf4j-simple:2.0.9")
+    implementation "org.springframework.boot:spring-boot-starter"
 
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.mockito:mockito-core:5.14.2'
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
-    testImplementation 'org.hamcrest:hamcrest:2.2'
+    implementation("org.apache.commons:commons-lang3:3.20.0")
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
 }
+
+bootJar.enabled = false
+jar.archiveClassifier = ''
 
 test {
     useJUnitPlatform()
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = rootProject.getGroup()
+            artifactId = rootProject.getName()
+            version = rootProject.getVersion()
+
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/panyukovnn/yt-subtitles-starter"
+            credentials {
+                username = 'panyukovnn'
+                password = "$githubPackagesWriteToken"
+            }
+        }
+    }
 }

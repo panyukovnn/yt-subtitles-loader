@@ -12,6 +12,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Данный класс вынесен отдельно для удобства тестирования
@@ -73,7 +74,7 @@ public class YtDlpProcessBuilderCreator {
         Files.createDirectories(tempDir);
 
         // Указываем имя без расширения, т.к. yt-dlp автоматически добавит язык и .vtt
-        String tempFileNameWithoutExt = "temp_subs_" + System.currentTimeMillis();
+        String tempFileNameWithoutExt = "temp_subs_" + UUID.randomUUID().toString().substring(0, 8);
         Path outputPathTemplate = tempDir.resolve(tempFileNameWithoutExt);
         String subsType = isAutoSubs ? "--write-auto-subs" : "--write-subs";
 

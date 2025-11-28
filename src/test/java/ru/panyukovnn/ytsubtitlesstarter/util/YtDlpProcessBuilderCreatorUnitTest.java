@@ -1,12 +1,21 @@
 package ru.panyukovnn.ytsubtitlesstarter.util;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import ru.panyukovnn.ytsubtitlesstarter.exception.YtLoadingException;
+import ru.panyukovnn.ytsubtitlesstarter.service.YtDlpProcessBuilderCreator;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -20,12 +29,62 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class YtDlpProcessBuilderCreatorUnitTest {
 
+    private static Path ytDlpExecutablePath;
+
+    @BeforeAll
+    static void setUp() throws Exception {
+        String executableFileName = defineYtDlpExecutableFileName();
+        String resourcePath = "/yt-dlp/" + executableFileName;
+
+        InputStream resourceStream = YtDlpProcessBuilderCreatorUnitTest.class.getResourceAsStream(resourcePath);
+        if (resourceStream == null) {
+            throw new YtLoadingException("4825", "Не удалось найти исполняемый файл yt-dlp в ресурсах: " + resourcePath);
+        }
+
+        Path tempFile = Files.createTempFile("yt-dlp_", "_" + executableFileName);
+        tempFile.toFile().deleteOnExit();
+
+        Files.copy(resourceStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        resourceStream.close();
+
+        setExecutablePermissions(tempFile);
+
+        ytDlpExecutablePath = tempFile;
+    }
+
+    private static void setExecutablePermissions(Path tempFile) {
+        try {
+            Set<PosixFilePermission> permissions = new HashSet<>();
+            permissions.add(PosixFilePermission.OWNER_READ);
+            permissions.add(PosixFilePermission.OWNER_WRITE);
+            permissions.add(PosixFilePermission.OWNER_EXECUTE);
+            Files.setPosixFilePermissions(tempFile, permissions);
+        } catch (Exception e) {
+            tempFile.toFile().setExecutable(true, false);
+        }
+    }
+
+    private static String defineYtDlpExecutableFileName() {
+        String osName = System.getProperty("os.name").toLowerCase();
+
+        if (osName.contains("mac")) {
+            return "yt-dlp_macos";
+        } else if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
+            String arch = System.getProperty("os.arch").toLowerCase();
+            return arch.contains("aarch64") || arch.contains("arm64")
+                ? "yt-dlp_linux_aarch64"
+                : "yt-dlp_linux";
+        }
+
+        throw new YtLoadingException("4824", "Не удалось определить подходящий yt-dlp исполняемый файл для системы: " + osName);
+    }
+
     @Nested
     class CreateProcessBuilderMethod {
 
         @Test
         void when_createProcessBuilder_withValidUrlAndRussianLanguageAndNoAutoSubs_then_returnProcessBuilderWithCorrectCommand() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc1234567";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -42,7 +101,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withValidUrlAndEnglishLanguageAndAutoSubs_then_returnProcessBuilderWithAutoSubsFlag() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=xyz9876543";
             String lang = "en";
             boolean isAutoSubs = true;
@@ -58,7 +117,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withDifferentLanguageCodes_then_passLanguageToSubLangParameter() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "fr";
             boolean isAutoSubs = false;
@@ -72,7 +131,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withVideoUrlContainingSpecialCharacters_then_includeUrlInCommand() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=test&t=10";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -85,7 +144,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withDifferentLanguageValues_then_eachReturnUniqueCommand() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
 
             Pair<ProcessBuilder, Path> result1 = creator.createProcessBuilder(videoUrl, "ru", false);
@@ -100,7 +159,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withAutoSubsTrue_then_useAutoSubsFlag() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = true;
@@ -113,7 +172,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withAutoSubsFalse_then_useStandardSubsFlag() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -126,7 +185,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_then_returnProcessBuilderWithCorrectWorkingDirectory() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -138,7 +197,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_thenReturnProcessBuilderWithDirectYtDlpExecution() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -156,7 +215,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withEmptyLanguageString_then_passEmptyStringToSubLangParameter() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "";
             boolean isAutoSubs = false;
@@ -170,7 +229,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withNullLanguage_then_createCommandWithNullInSubLang() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = null;
             boolean isAutoSubs = false;
@@ -187,7 +246,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withNullUrl_then_createCommandWithNullInUrl() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = null;
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -204,7 +263,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withVeryLongUrl_then_commandConstructedWithFullUrl() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=" + "a".repeat(500);
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -217,7 +276,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withMultipleCalls_thenEachReturnNewProcessBuilderInstance() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
 
             Pair<ProcessBuilder, Path> result1 = creator.createProcessBuilder(videoUrl, "ru", false);
@@ -229,7 +288,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withVttFormatFlag_then_commandIncludesSubFormatVtt() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -243,7 +302,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withSkipDownloadFlag_then_commandIncludesSkipDownloadFlag() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -256,7 +315,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_then_returnValidOutputPath() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -275,7 +334,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_afterStaticInitialization_then_ytDlpPathIsResolved() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;
@@ -295,7 +354,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
             String osName = System.getProperty("os.name").toLowerCase();
 
             if (osName.contains("mac")) {
-                YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+                YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
                 Pair<ProcessBuilder, Path> result = creator.createProcessBuilder("https://youtube.com/watch?v=abc", "ru", false);
 
                 List<String> command = result.getLeft().command();
@@ -312,7 +371,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
             if ((osName.contains("nux") || osName.contains("nix")) &&
                 !osArch.contains("aarch64") && !osArch.contains("arm64")) {
-                YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+                YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
                 Pair<ProcessBuilder, Path> result = creator.createProcessBuilder("https://youtube.com/watch?v=abc", "ru", false);
 
                 List<String> command = result.getLeft().command();
@@ -329,7 +388,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
             if ((osName.contains("nux") || osName.contains("nix")) &&
                 (osArch.contains("aarch64") || osArch.contains("arm64"))) {
-                YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+                YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
                 Pair<ProcessBuilder, Path> result = creator.createProcessBuilder("https://youtube.com/watch?v=abc", "ru", false);
 
                 List<String> command = result.getLeft().command();
@@ -345,7 +404,7 @@ class YtDlpProcessBuilderCreatorUnitTest {
 
         @Test
         void when_createProcessBuilder_withResourcesAvailable_then_executablePathEmbeddedInCommand() throws Exception {
-            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator();
+            YtDlpProcessBuilderCreator creator = new YtDlpProcessBuilderCreator(ytDlpExecutablePath);
             String videoUrl = "https://youtube.com/watch?v=abc";
             String lang = "ru";
             boolean isAutoSubs = false;

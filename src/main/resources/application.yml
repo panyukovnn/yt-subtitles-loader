@@ -1,0 +1,9 @@
+
+server:
+  port: 8086
+  servlet:
+    context-path: /${spring.application.name}
+
+spring:
+  application:
+    name: yt-subtitles-loader

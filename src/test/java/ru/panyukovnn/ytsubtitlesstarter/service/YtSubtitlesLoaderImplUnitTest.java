@@ -13,7 +13,6 @@ import org.mockito.quality.Strictness;
 import ru.panyukovnn.ytsubtitlesstarter.dto.SubtitlesLang;
 import ru.panyukovnn.ytsubtitlesstarter.dto.YtSubtitles;
 import ru.panyukovnn.ytsubtitlesstarter.exception.YtLoadingException;
-import ru.panyukovnn.ytsubtitlesstarter.util.YtDlpProcessBuilderCreator;
 import ru.panyukovnn.ytsubtitlesstarter.util.YtLinkHelper;
 
 import java.io.ByteArrayInputStream;

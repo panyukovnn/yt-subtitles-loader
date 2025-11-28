@@ -1,14 +1,14 @@
 package ru.panyukovnn.ytsubtitlesstarter.service;
 
 import jakarta.annotation.Nullable;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import ru.panyukovnn.ytsubtitlesstarter.dto.SubtitlesLang;
 import ru.panyukovnn.ytsubtitlesstarter.dto.YtSubtitles;
 import ru.panyukovnn.ytsubtitlesstarter.exception.YtLoadingException;
-import ru.panyukovnn.ytsubtitlesstarter.util.YtDlpProcessBuilderCreator;
 import ru.panyukovnn.ytsubtitlesstarter.util.YtLinkHelper;
 
 import java.io.BufferedReader;
@@ -25,17 +25,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@Slf4j
+@Service
+@RequiredArgsConstructor
 public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
-
-    private static final Logger log = LoggerFactory.getLogger(YtSubtitlesLoaderImpl.class);
 
     private final YtLinkHelper ytLinkHelper;
     private final YtDlpProcessBuilderCreator ytDlpProcessBuilderCreator;
-
-    public YtSubtitlesLoaderImpl(YtLinkHelper ytLinkHelper, YtDlpProcessBuilderCreator ytDlpProcessBuilderCreator) {
-        this.ytLinkHelper = ytLinkHelper;
-        this.ytDlpProcessBuilderCreator = ytDlpProcessBuilderCreator;
-    }
 
     public YtSubtitles load(String dirtyLink) {
         log.info("Начинаю загрузку субтитров из youtube видео по ссылке: {}", dirtyLink);

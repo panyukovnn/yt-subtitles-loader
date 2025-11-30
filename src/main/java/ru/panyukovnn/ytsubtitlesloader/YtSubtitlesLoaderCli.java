@@ -5,7 +5,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import ru.panyukovnn.ytsubtitlesloader.dto.YtSubtitles;
 import ru.panyukovnn.ytsubtitlesloader.exception.YtLoadingException;
-import ru.panyukovnn.ytsubtitlesloader.factory.ServiceFactory;
+import ru.panyukovnn.ytsubtitlesloader.factory.YtSubtitlesLoaderFactory;
 import ru.panyukovnn.ytsubtitlesloader.service.YtSubtitlesLoader;
 
 import java.util.concurrent.Callable;
@@ -31,7 +31,7 @@ public class YtSubtitlesLoaderCli implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
-            ServiceFactory factory = new ServiceFactory();
+            YtSubtitlesLoaderFactory factory = new YtSubtitlesLoaderFactory();
             YtSubtitlesLoader loader = factory.createYtSubtitlesLoader();
 
             YtSubtitles result = loader.load(youtubeUrl);

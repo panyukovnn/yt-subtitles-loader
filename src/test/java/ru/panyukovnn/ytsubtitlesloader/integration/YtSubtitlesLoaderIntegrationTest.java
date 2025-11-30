@@ -3,7 +3,7 @@ package ru.panyukovnn.ytsubtitlesloader.integration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.panyukovnn.ytsubtitlesloader.exception.YtLoadingException;
-import ru.panyukovnn.ytsubtitlesloader.factory.ServiceFactory;
+import ru.panyukovnn.ytsubtitlesloader.factory.YtSubtitlesLoaderFactory;
 import ru.panyukovnn.ytsubtitlesloader.service.YtSubtitlesLoader;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -21,7 +21,7 @@ class YtSubtitlesLoaderIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        ServiceFactory factory = new ServiceFactory();
+        YtSubtitlesLoaderFactory factory = new YtSubtitlesLoaderFactory();
         ytSubtitlesLoader = factory.createYtSubtitlesLoader();
     }
 

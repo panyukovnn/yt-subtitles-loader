@@ -1,5 +1,6 @@
 package ru.panyukovnn.ytsubtitlesloader.service;
 
+import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -194,7 +195,7 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
      * @param isAutoSubs загружать ли автогенерированные субтитры
      * @return содержимое субтитров из файла, созданного yt-dlp
      */
-    // TODO добавить nullable аннотацию
+    @Nullable
     private String tryDownloadSubtitles(String videoUrl, SubtitlesLang lang, boolean isAutoSubs) {
         try {
             log.debug("Начало загрузки субтитров для видео: {}", videoUrl);

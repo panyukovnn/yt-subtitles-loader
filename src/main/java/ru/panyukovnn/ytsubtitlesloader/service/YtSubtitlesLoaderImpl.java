@@ -18,10 +18,9 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
@@ -61,7 +60,8 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
             }
 
             List<String> subtitlesLines = List.of(subtitlesContent.split("\n"));
-            Set<String> cleanedFileLines = cleanSubtitles(subtitlesLines);
+
+            List<String> cleanedFileLines = cleanSubtitles(subtitlesLines);
 
             String subtitles = String.join(" ", cleanedFileLines);
 
@@ -158,12 +158,13 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
             while ((line = stderrReader.readLine()) != null) {
                 errorOutput.append(line).append("\n");
             }
-            if (StringUtils.isNotBlank(errorOutput)) {
-                log.warn("yt-dlp --list-subs stderr: {}", errorOutput);
-            }
 
             int exitCode = process.waitFor();
             if (exitCode != 0) {
+                if (StringUtils.isNotBlank(errorOutput)) {
+                    log.warn("yt-dlp --list-subs stderr: {}", errorOutput);
+                }
+
                 log.warn("a3d1 Ошибка получения списка субтитров, exitCode: {}", exitCode);
                 return Optional.empty();
             }
@@ -190,8 +191,8 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
     }
 
     /**
-     * @param videoUrl ссылка на видео на youtube
-     * @param lang язык субтитров (ru или en)
+     * @param videoUrl   ссылка на видео на youtube
+     * @param lang       язык субтитров (ru или en)
      * @param isAutoSubs загружать ли автогенерированные субтитры
      * @return содержимое субтитров из файла, созданного yt-dlp
      */
@@ -267,8 +268,8 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
         }
     }
 
-    private Set<String> cleanSubtitles(List<String> lines) {
-        Set<String> uniqueLines = new LinkedHashSet<>();
+    private List<String> cleanSubtitles(List<String> lines) {
+        List<String> cleanedLines = new ArrayList<>();
 
         for (String line : lines) {
             // Убираем теги и метки
@@ -282,11 +283,20 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
                 .trim();
 
             if (!cleanedLine.isEmpty()) {
-                uniqueLines.add(cleanedLine);
+                cleanedLines.add(cleanedLine);
             }
         }
 
-        return uniqueLines;
+        // Пропускаем первую 3 строчки с метаинформацией
+        if (lines.size() > 3) {
+            if (lines.getFirst().startsWith("WEBVTT")
+                && lines.get(1).startsWith("Kind: ")
+                && lines.get(2).startsWith("Language: ")) {
+                return cleanedLines.subList(3, cleanedLines.size() - 1);
+            }
+        }
+
+        return cleanedLines;
     }
 
     /**

@@ -1,10 +1,9 @@
 plugins {
     id 'java'
     id 'java-library'
+    id 'application'
     id 'maven-publish'
     id 'com.palantir.git-version' version '3.1.0'
-    id 'org.springframework.boot' version '3.2.5'
-    id 'io.spring.dependency-management' version '1.1.5'
 }
 
 group = 'ru.panyukovnn'
@@ -22,20 +21,45 @@ repositories {
 }
 
 dependencies {
-    implementation "org.springframework.boot:spring-boot-starter-web"
-    implementation "org.springframework.boot:spring-boot-starter-validation"
+    // Picocli для CLI
+    implementation 'info.picocli:picocli:4.7.5'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.5'
 
-    implementation("org.apache.commons:commons-lang3:3.20.0")
+    // Логирование
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    implementation 'org.slf4j:slf4j-api:2.0.9'
 
-    implementation 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    // Утилиты
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
 
-    testAnnotationProcessor 'org.projectlombok:lombok'
-    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // Тестирование
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    testImplementation("org.hamcrest:hamcrest:3.0")
 }
 
-bootJar.enabled = false
-jar.archiveClassifier = ''
+application {
+    mainClass = 'ru.panyukovnn.ytsubtitlesloader.YtSubtitlesLoaderCli'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'ru.panyukovnn.ytsubtitlesloader.YtSubtitlesLoaderCli'
+        )
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 
 test {
     useJUnitPlatform()

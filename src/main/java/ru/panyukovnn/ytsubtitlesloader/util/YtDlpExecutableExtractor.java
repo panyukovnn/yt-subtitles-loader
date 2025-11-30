@@ -1,8 +1,6 @@
-package ru.panyukovnn.ytsubtitlesstarter.config;
+package ru.panyukovnn.ytsubtitlesloader.util;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import ru.panyukovnn.ytsubtitlesstarter.exception.YtLoadingException;
+import ru.panyukovnn.ytsubtitlesloader.exception.YtLoadingException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,19 +12,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Конфигурация для инициализации исполняемого файла yt-dlp.
+ * Утилита для извлечения исполняемого файла yt-dlp из ресурсов JAR.
  * Подобная инициализация необходима, поскольку файл находится в ресурсах и не может быть исполнен сам по себе.
  */
-@Configuration
-public class YtDlpConfiguration {
+public class YtDlpExecutableExtractor {
 
-    @Bean
-    public Path ytDlpExecutablePath() {
+    public static Path extractExecutable() {
         try {
-            String executableFileName = defineYtDlpExecutableFileName();
+            String executableFileName = determineExecutableFileName();
             String resourcePath = "/yt-dlp/" + executableFileName;
 
-            InputStream resourceStream = getClass().getResourceAsStream(resourcePath);
+            InputStream resourceStream = YtDlpExecutableExtractor.class.getResourceAsStream(resourcePath);
             if (resourceStream == null) {
                 throw new YtLoadingException("4825", "Не удалось найти исполняемый файл yt-dlp в ресурсах: " + resourcePath);
             }
@@ -45,7 +41,7 @@ public class YtDlpConfiguration {
         }
     }
 
-    private void setExecutablePermissions(Path tempFile) throws IOException {
+    private static void setExecutablePermissions(Path tempFile) throws IOException {
         try {
             Set<PosixFilePermission> permissions = new HashSet<>();
             permissions.add(PosixFilePermission.OWNER_READ);
@@ -57,7 +53,7 @@ public class YtDlpConfiguration {
         }
     }
 
-    private String defineYtDlpExecutableFileName() {
+    private static String determineExecutableFileName() {
         String osName = System.getProperty("os.name").toLowerCase();
 
         if (osName.contains("mac")) {

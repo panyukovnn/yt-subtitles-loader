@@ -1,17 +1,17 @@
-package ru.panyukovnn.ytsubtitlesstarter.util;
+package ru.panyukovnn.ytsubtitlesloader.util;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import ru.panyukovnn.ytsubtitlesstarter.exception.YtLoadingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.panyukovnn.ytsubtitlesloader.exception.YtLoadingException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.regex.Pattern;
 
-@Slf4j
-@Service
 public class YtLinkHelper {
+
+    private static final Logger log = LoggerFactory.getLogger(YtLinkHelper.class);
 
     public static final Pattern YOUTUBE_VIDEO_ID_PATTERN = Pattern.compile("^[\\w-]{11}$");
 

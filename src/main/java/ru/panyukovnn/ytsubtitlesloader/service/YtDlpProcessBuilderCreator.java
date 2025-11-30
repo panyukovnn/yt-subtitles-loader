@@ -1,8 +1,6 @@
-package ru.panyukovnn.ytsubtitlesstarter.service;
+package ru.panyukovnn.ytsubtitlesloader.service;
 
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,11 +11,13 @@ import java.util.UUID;
 /**
  * Данный класс вынесен отдельно для удобства тестирования
  */
-@Service
-@RequiredArgsConstructor
 public class YtDlpProcessBuilderCreator {
 
     private final Path ytDlpExecutablePath;
+
+    public YtDlpProcessBuilderCreator(Path ytDlpExecutablePath) {
+        this.ytDlpExecutablePath = ytDlpExecutablePath;
+    }
 
     public ProcessBuilder createListSubsProcessBuilder(String videoUrl) {
         return new ProcessBuilder(

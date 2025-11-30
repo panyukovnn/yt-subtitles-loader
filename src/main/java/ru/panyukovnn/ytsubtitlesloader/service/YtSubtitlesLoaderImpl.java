@@ -1,15 +1,13 @@
-package ru.panyukovnn.ytsubtitlesstarter.service;
+package ru.panyukovnn.ytsubtitlesloader.service;
 
-import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.stereotype.Service;
-import ru.panyukovnn.ytsubtitlesstarter.dto.SubtitlesLang;
-import ru.panyukovnn.ytsubtitlesstarter.dto.YtSubtitles;
-import ru.panyukovnn.ytsubtitlesstarter.exception.YtLoadingException;
-import ru.panyukovnn.ytsubtitlesstarter.util.YtLinkHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.panyukovnn.ytsubtitlesloader.dto.SubtitlesLang;
+import ru.panyukovnn.ytsubtitlesloader.dto.YtSubtitles;
+import ru.panyukovnn.ytsubtitlesloader.exception.YtLoadingException;
+import ru.panyukovnn.ytsubtitlesloader.util.YtLinkHelper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,16 +23,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Slf4j
-@Service
-@RequiredArgsConstructor
 public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
+
+    private static final Logger log = LoggerFactory.getLogger(YtSubtitlesLoaderImpl.class);
 
     private final YtLinkHelper ytLinkHelper;
     private final YtDlpProcessBuilderCreator ytDlpProcessBuilderCreator;
 
+    public YtSubtitlesLoaderImpl(YtLinkHelper ytLinkHelper, YtDlpProcessBuilderCreator ytDlpProcessBuilderCreator) {
+        this.ytLinkHelper = ytLinkHelper;
+        this.ytDlpProcessBuilderCreator = ytDlpProcessBuilderCreator;
+    }
+
     public YtSubtitles load(String dirtyLink) {
-        log.info("Начинаю загрузку субтитров из youtube видео по ссылке: {}", dirtyLink);
+        log.debug("Начинаю загрузку субтитров из youtube видео по ссылке: {}", dirtyLink);
 
         // Очистка старых временных файлов
         cleanupOldTempFiles();
@@ -80,7 +82,7 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
         ProcessBuilder processBuilder = ytDlpProcessBuilderCreator.createListSubsProcessBuilder(videoUrl);
 
         try {
-            log.info("Получение списка доступных субтитров для видео: {}", videoUrl);
+            log.debug("Получение списка доступных субтитров для видео: {}", videoUrl);
 
             Process process = processBuilder.start();
 
@@ -192,10 +194,10 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
      * @param isAutoSubs загружать ли автогенерированные субтитры
      * @return содержимое субтитров из файла, созданного yt-dlp
      */
-    @Nullable
+    // TODO добавить nullable аннотацию
     private String tryDownloadSubtitles(String videoUrl, SubtitlesLang lang, boolean isAutoSubs) {
         try {
-            log.info("Начало загрузки субтитров для видео: {}", videoUrl);
+            log.debug("Начало загрузки субтитров для видео: {}", videoUrl);
 
             Pair<ProcessBuilder, Path> builderAndPath = ytDlpProcessBuilderCreator.createProcessBuilder(
                 videoUrl, lang.getLang(), isAutoSubs
@@ -254,7 +256,7 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
                 return null;
             }
 
-            log.info("Субтитры успешно загружены: {}", videoUrl);
+            log.debug("Субтитры успешно загружены: {}", videoUrl);
 
             return subtitles;
         } catch (Exception e) {
@@ -307,7 +309,7 @@ public class YtSubtitlesLoaderImpl implements YtSubtitlesLoader {
 
                     if (creationTime.isBefore(fifteenMinutesAgo)) {
                         Files.delete(file);
-                        log.info("Удален старый временный файл: {}", file);
+                        log.debug("Удален старый временный файл: {}", file);
                     }
                 } catch (IOException e) {
                     log.warn("Не удалось проверить или удалить временный файл: {}", file, e);

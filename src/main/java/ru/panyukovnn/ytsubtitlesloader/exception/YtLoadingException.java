@@ -1,4 +1,4 @@
-package ru.panyukovnn.ytsubtitlesstarter.exception;
+package ru.panyukovnn.ytsubtitlesloader.exception;
 
 public class YtLoadingException extends RuntimeException {
 

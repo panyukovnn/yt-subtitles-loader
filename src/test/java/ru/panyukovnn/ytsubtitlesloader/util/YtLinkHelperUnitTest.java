@@ -1,11 +1,14 @@
-package ru.panyukovnn.ytsubtitlesstarter.util;
+package ru.panyukovnn.ytsubtitlesloader.util;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import ru.panyukovnn.ytsubtitlesstarter.exception.YtLoadingException;
+import ru.panyukovnn.ytsubtitlesloader.exception.YtLoadingException;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
 
 class YtLinkHelperUnitTest {

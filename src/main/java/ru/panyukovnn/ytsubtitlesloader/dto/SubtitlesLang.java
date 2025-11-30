@@ -1,4 +1,4 @@
-package ru.panyukovnn.ytsubtitlesstarter.dto;
+package ru.panyukovnn.ytsubtitlesloader.dto;
 
 public enum SubtitlesLang {
 

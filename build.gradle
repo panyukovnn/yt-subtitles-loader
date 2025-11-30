@@ -12,8 +12,6 @@ version = gitVersion()
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
-    withJavadocJar()
-    withSourcesJar()
 }
 
 repositories {
@@ -66,26 +64,4 @@ jar {
 test {
     useJUnitPlatform()
     jvmArgs("-XX:+EnableDynamicAgentLoading")
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = rootProject.getGroup()
-            artifactId = rootProject.getName()
-            version = rootProject.getVersion()
-
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/panyukovnn/yt-subtitles-starter"
-            credentials {
-                username = 'panyukovnn'
-                password = "$githubPackagesWriteToken"
-            }
-        }
-    }
 }
